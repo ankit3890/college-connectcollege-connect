@@ -25,7 +25,19 @@ export default async function SubjectPage({ params, searchParams }: { params: Pr
         return (
             <>
                 <Navbar />
-                <div className="p-6 text-center text-red-600">Subject not found</div>
+                <div className="p-6 text-center">
+                    <h1 className="text-2xl font-bold text-red-600 mb-4">Subject not found</h1>
+                    <div className="text-left max-w-lg mx-auto bg-slate-100 p-4 rounded-lg text-xs font-mono overflow-auto">
+                        <p><strong>Debug Info:</strong></p>
+                        <p>ID: {id}</p>
+                        <p>Data: {JSON.stringify(data)}</p>
+                        <p>Base URL: {process.env.NEXT_PUBLIC_BASE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')}</p>
+                        <p>Timestamp: {new Date().toISOString()}</p>
+                    </div>
+                    <div className="mt-6">
+                        <a href="/syllabus/search" className="text-blue-600 hover:underline">Return to Search</a>
+                    </div>
+                </div>
             </>
         );
     }
