@@ -1,26 +1,15 @@
-"use client";
-
-import Navbar from "@/components/Navbar";
-import { useState, useEffect } from "react";
-
-interface User {
-    _id: string;
-    studentId: string;
-    email: string;
-    name?: string;
-    firstName?: string;
-    lastName?: string;
-    branch?: string;
-    year?: number;
-    role?: string;
-    isBanned?: boolean;
-    bannedReason?: string;
-    bannedUntil?: string;
-    lastActiveAt?: string;
-    mobileNumber?: string;
-    gender?: string;
-    profilePhoto?: string;
-    username?: string;
+lastName ?: string;
+branch ?: string;
+year ?: number;
+role ?: string;
+isBanned ?: boolean;
+bannedReason ?: string;
+bannedUntil ?: string;
+lastActiveAt ?: string;
+mobileNumber ?: string;
+gender ?: string;
+profilePhoto ?: string;
+username ?: string;
 }
 
 export default function AdminUsersPage() {
@@ -430,23 +419,6 @@ export default function AdminUsersPage() {
                                                                     )}
                                                                 </div>
                                                             );
-                                                        })()
-                                                    )}
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <div className="flex items-center justify-center gap-2">
-                                                        <button
-                                                            onClick={() => openProfileModal(user)}
-                                                            className="text-blue-600 hover:text-blue-800 font-medium text-sm"
-                                                            title="View Profile"
-                                                        >
-                                                            View
-                                                        </button>
-
-                                                        {/* Only show Edit/Ban if allowed */}
-                                                        {/* Edit Button */}
-                                                        {(currentUser?.role === "superadmin" || (currentUser?.role === "admin" && (user.role === "student" || user.role === "tester" || user._id === currentUser._id))) && (
-                                                            <>
                                                                 <span className="text-slate-300">|</span>
                                                                 <button
                                                                     onClick={() => openEditModal(user)}
@@ -458,397 +430,406 @@ export default function AdminUsersPage() {
                                                             </>
                                                         )}
 
-                                                        {/* Ban Button - NEVER show for self */}
-                                                        {user._id !== currentUser?._id && (currentUser?.role === "superadmin" || (currentUser?.role === "admin" && (user.role === "student" || user.role === "tester"))) && (
-                                                            <>
-                                                                <span className="text-slate-300">|</span>
-                                                                <button
-                                                                    onClick={() => openBanModal(user)}
-                                                                    className={`font-medium text-sm ${user.isBanned ? "text-green-600 hover:text-green-800" : "text-red-600 hover:text-red-800"
-                                                                        }`}
-                                                                    title={user.isBanned ? "Unban User" : "Ban User"}
-                                                                >
-                                                                    {user.isBanned ? "Unban" : "Ban"}
-                                                                </button>
-                                                            </>
-                                                        )}
+                                                {/* Ban Button - NEVER show for self */}
+                                                {user._id !== currentUser?._id && (currentUser?.role === "superadmin" || (currentUser?.role === "admin" && (user.role === "student" || user.role === "tester"))) && (
+                                                    <>
+                                                        <span className="text-slate-300">|</span>
+                                                        <button
+                                                            onClick={() => openBanModal(user)}
+                                                            className={`font-medium text-sm ${user.isBanned ? "text-green-600 hover:text-green-800" : "text-red-600 hover:text-red-800"
+                                                                }`}
+                                                            title={user.isBanned ? "Unban User" : "Ban User"}
+                                                        >
+                                                            {user.isBanned ? "Unban" : "Ban"}
+                                                        </button>
+                                                    </>
+                                                )}
 
-                                                        {/* Delete button for Super Admin only, and NOT for admins */}
-                                                        {currentUser?.role === "superadmin" && user.role !== "admin" && user.role !== "superadmin" && (
-                                                            <>
-                                                                <span className="text-slate-300">|</span>
-                                                                <button
-                                                                    onClick={() => openDeleteModal(user)}
-                                                                    className="text-slate-500 hover:text-red-600 font-medium text-sm"
-                                                                    title="Delete User"
-                                                                >
-                                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                                    </svg>
-                                                                </button>
-                                                            </>
-                                                        )}
-                                                    </div>
+                                                {/* Delete button for Super Admin only, and NOT for admins */}
+                                                {currentUser?.role === "superadmin" && user.role !== "admin" && user.role !== "superadmin" && (
+                                                    <>
+                                                        <span className="text-slate-300">|</span>
+                                                        <button
+                                                            onClick={() => openDeleteModal(user)}
+                                                            className="text-slate-500 hover:text-red-600 font-medium text-sm"
+                                                            title="Delete User"
+                                                        >
+                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                            </svg>
+                                                        </button>
+                                                    </>
+                                                )}
+                                            </div>
                                                 </td>
-                                            </tr>
-                                        );
+                            </tr>
+                            );
                                     })}
-                                </tbody>
-                            </table>
+                        </tbody>
+                    </table>
+                        </div>
+                    </div >
+                )
+}
+            </main >
+
+    {/* Profile Modal */ }
+{
+    showProfileModal && selectedUser && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-md flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border-2 border-black">
+                <div className="p-6 border-b border-slate-200">
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-2xl font-bold text-slate-900">User Profile</h2>
+                        <button
+                            onClick={() => setShowProfileModal(false)}
+                            className="text-slate-400 hover:text-slate-600"
+                        >
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div className="p-6 space-y-4">
+                    <div className="flex items-center gap-4 mb-6">
+                        {selectedUser.profilePhoto ? (
+                            <img src={selectedUser.profilePhoto} alt="" className="w-20 h-20 rounded-full object-cover" />
+                        ) : (
+                            <div className="w-20 h-20 rounded-full bg-slate-200 flex items-center justify-center">
+                                <span className="text-2xl text-slate-600 font-medium">
+                                    {(selectedUser.name || selectedUser.firstName || "?").charAt(0)}
+                                </span>
+                            </div>
+                        )}
+                        <div>
+                            <h3 className="text-xl font-semibold text-slate-900">
+                                {selectedUser.name || `${selectedUser.firstName || ""} ${selectedUser.lastName || ""}`.trim() || "No name"}
+                            </h3>
+                            <p className="text-slate-600">{selectedUser.email}</p>
                         </div>
                     </div>
-                )}
-            </main>
 
-            {/* Profile Modal */}
-            {showProfileModal && selectedUser && (
-                <div className="fixed inset-0 bg-black/30 backdrop-blur-md flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border-2 border-black">
-                        <div className="p-6 border-b border-slate-200">
-                            <div className="flex items-center justify-between">
-                                <h2 className="text-2xl font-bold text-slate-900">User Profile</h2>
-                                <button
-                                    onClick={() => setShowProfileModal(false)}
-                                    className="text-slate-400 hover:text-slate-600"
-                                >
-                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                </button>
-                            </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <p className="text-sm text-slate-500">CyberVidya ID</p>
+                            <p className="font-mono font-medium">{selectedUser.studentId}</p>
                         </div>
-                        <div className="p-6 space-y-4">
-                            <div className="flex items-center gap-4 mb-6">
-                                {selectedUser.profilePhoto ? (
-                                    <img src={selectedUser.profilePhoto} alt="" className="w-20 h-20 rounded-full object-cover" />
-                                ) : (
-                                    <div className="w-20 h-20 rounded-full bg-slate-200 flex items-center justify-center">
-                                        <span className="text-2xl text-slate-600 font-medium">
-                                            {(selectedUser.name || selectedUser.firstName || "?").charAt(0)}
-                                        </span>
-                                    </div>
-                                )}
-                                <div>
-                                    <h3 className="text-xl font-semibold text-slate-900">
-                                        {selectedUser.name || `${selectedUser.firstName || ""} ${selectedUser.lastName || ""}`.trim() || "No name"}
-                                    </h3>
-                                    <p className="text-slate-600">{selectedUser.email}</p>
-                                </div>
-                            </div>
+                        <div>
+                            <p className="text-sm text-slate-500">Role</p>
+                            <p className="font-medium">
+                                {selectedUser.role === "superadmin" ? "Super Admin" : selectedUser.role === "admin" ? "Admin" : selectedUser.role === "tester" ? "Tester" : "Student"}
+                            </p>
+                        </div>
+                        <div>
+                            <p className="text-sm text-slate-500">Branch</p>
+                            <p className="font-medium">{selectedUser.branch || "-"}</p>
+                        </div>
+                        <div>
+                            <p className="text-sm text-slate-500">Year</p>
+                            <p className="font-medium">{selectedUser.year || "-"}</p>
+                        </div>
+                        <div>
+                            <p className="text-sm text-slate-500">Gender</p>
+                            <p className="font-medium">{selectedUser.gender || "-"}</p>
+                        </div>
+                        <div>
+                            <p className="text-sm text-slate-500">Mobile</p>
+                            <p className="font-medium">{selectedUser.mobileNumber || "-"}</p>
+                        </div>
+                    </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <p className="text-sm text-slate-500">CyberVidya ID</p>
-                                    <p className="font-mono font-medium">{selectedUser.studentId}</p>
-                                </div>
-                                <div>
-                                    <p className="text-sm text-slate-500">Role</p>
-                                    <p className="font-medium">
-                                        {selectedUser.role === "superadmin" ? "Super Admin" : selectedUser.role === "admin" ? "Admin" : selectedUser.role === "tester" ? "Tester" : "Student"}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p className="text-sm text-slate-500">Branch</p>
-                                    <p className="font-medium">{selectedUser.branch || "-"}</p>
-                                </div>
-                                <div>
-                                    <p className="text-sm text-slate-500">Year</p>
-                                    <p className="font-medium">{selectedUser.year || "-"}</p>
-                                </div>
-                                <div>
-                                    <p className="text-sm text-slate-500">Gender</p>
-                                    <p className="font-medium">{selectedUser.gender || "-"}</p>
-                                </div>
-                                <div>
-                                    <p className="text-sm text-slate-500">Mobile</p>
-                                    <p className="font-medium">{selectedUser.mobileNumber || "-"}</p>
-                                </div>
-                            </div>
-
-                            {selectedUser.isBanned && (
-                                <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                                    <p className="text-sm font-semibold text-red-900">Banned</p>
-                                    <p className="text-sm text-red-700">{selectedUser.bannedReason || "No reason provided"}</p>
-                                    {selectedUser.bannedUntil && (
-                                        <p className="text-xs text-red-600 mt-1">
-                                            Until: {new Date(selectedUser.bannedUntil).toLocaleString()}
-                                        </p>
-                                    )}
-                                </div>
+                    {selectedUser.isBanned && (
+                        <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                            <p className="text-sm font-semibold text-red-900">Banned</p>
+                            <p className="text-sm text-red-700">{selectedUser.bannedReason || "No reason provided"}</p>
+                            {selectedUser.bannedUntil && (
+                                <p className="text-xs text-red-600 mt-1">
+                                    Until: {new Date(selectedUser.bannedUntil).toLocaleString()}
+                                </p>
                             )}
                         </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    )
+}
+
+{/* Edit Modal */ }
+{
+    showEditModal && selectedUser && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-md flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full border-2 border-black">
+                <div className="p-6 border-b border-slate-200">
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-2xl font-bold text-slate-900">Edit User</h2>
+                        <button
+                            onClick={() => setShowEditModal(false)}
+                            className="text-slate-400 hover:text-slate-600"
+                        >
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
                     </div>
                 </div>
-            )}
-
-            {/* Edit Modal */}
-            {showEditModal && selectedUser && (
-                <div className="fixed inset-0 bg-black/30 backdrop-blur-md flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full border-2 border-black">
-                        <div className="p-6 border-b border-slate-200">
-                            <div className="flex items-center justify-between">
-                                <h2 className="text-2xl font-bold text-slate-900">Edit User</h2>
-                                <button
-                                    onClick={() => setShowEditModal(false)}
-                                    className="text-slate-400 hover:text-slate-600"
-                                >
-                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-                        <div className="p-6 space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">CyberVidya ID</label>
-                                <input
-                                    type="text"
-                                    value={editForm.studentId}
-                                    disabled={true}
-                                    onChange={(e) => setEditForm({ ...editForm, studentId: e.target.value })}
-                                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-100 text-slate-500 cursor-not-allowed"
-                                    placeholder="202412345678901"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">Full Name</label>
-                                <input
-                                    type="text"
-                                    value={editForm.name}
-                                    disabled={true}
-                                    onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-100 text-slate-500 cursor-not-allowed"
-                                    placeholder="John Doe"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">Username</label>
-                                <input
-                                    type="text"
-                                    value={editForm.username}
-                                    onChange={(e) => setEditForm({ ...editForm, username: e.target.value })}
-                                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    placeholder="@username"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">Role</label>
-                                <select
-                                    value={editForm.role}
-                                    disabled={currentUser?.role === "admin" && currentUser?._id === selectedUser?._id}
-                                    onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
-                                    className={`w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${currentUser?.role === "admin" && currentUser?._id === selectedUser?._id ? "bg-slate-100 text-slate-500 cursor-not-allowed" : ""}`}
-                                >
-                                    <option value="student">Student</option>
-                                    <option value="tester">Tester</option>
-                                    {currentUser?.role === "superadmin" && (
-                                        <>
-                                            <option value="admin">Admin</option>
-                                            <option value="superadmin">Super Admin</option>
-                                        </>
-                                    )}
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">Branch</label>
-                                <input
-                                    type="text"
-                                    value={editForm.branch}
-                                    onChange={(e) => setEditForm({ ...editForm, branch: e.target.value })}
-                                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    placeholder="e.g., Computer Science"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">Year</label>
-                                <input
-                                    type="number"
-                                    value={editForm.year}
-                                    onChange={(e) => setEditForm({ ...editForm, year: e.target.value === "" ? "" : parseInt(e.target.value) })}
-                                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    min="1"
-                                    max="5"
-                                />
-                            </div>
-
-                            <div className="flex gap-3 pt-4">
-                                <button
-                                    onClick={() => setShowEditModal(false)}
-                                    className="flex-1 px-4 py-2 border border-slate-300 rounded-lg font-medium text-slate-700 hover:bg-slate-50"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={handleUpdateUser}
-                                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700"
-                                >
-                                    Save Changes
-                                </button>
-                            </div>
-                        </div>
+                <div className="p-6 space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">CyberVidya ID</label>
+                        <input
+                            type="text"
+                            value={editForm.studentId}
+                            disabled={true}
+                            onChange={(e) => setEditForm({ ...editForm, studentId: e.target.value })}
+                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-100 text-slate-500 cursor-not-allowed"
+                            placeholder="202412345678901"
+                        />
                     </div>
-                </div>
-            )}
 
-            {/* Delete Modal */}
-            {showDeleteModal && selectedUser && (
-                <div className="fixed inset-0 bg-black/30 backdrop-blur-md flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full border-2 border-black">
-                        <div className="p-6 border-b border-slate-200">
-                            <div className="flex items-center justify-between">
-                                <h2 className="text-2xl font-bold text-slate-900">Delete User</h2>
-                                <button
-                                    onClick={() => setShowDeleteModal(false)}
-                                    className="text-slate-400 hover:text-slate-600"
-                                >
-                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-                        <div className="p-6 space-y-4">
-                            <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
-                                <svg className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                </svg>
-                                <div>
-                                    <h3 className="text-red-800 font-semibold">Warning: Irreversible Action</h3>
-                                    <p className="text-red-700 text-sm mt-1">
-                                        You are about to permanently delete <strong>{selectedUser.name || selectedUser.studentId}</strong>. This action cannot be undone.
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="flex gap-3 pt-4">
-                                <button
-                                    onClick={() => setShowDeleteModal(false)}
-                                    className="flex-1 px-4 py-2 border border-slate-300 rounded-lg font-medium text-slate-700 hover:bg-slate-50"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={handleDeleteUser}
-                                    className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700"
-                                >
-                                    Delete User
-                                </button>
-                            </div>
-                        </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Full Name</label>
+                        <input
+                            type="text"
+                            value={editForm.name}
+                            disabled={true}
+                            onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-100 text-slate-500 cursor-not-allowed"
+                            placeholder="John Doe"
+                        />
                     </div>
-                </div>
-            )}
 
-            {/* Ban Modal */}
-            {showBanModal && selectedUser && (
-                <div className="fixed inset-0 bg-black/30 backdrop-blur-md flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full border-2 border-black">
-                        <div className="p-6 border-b border-slate-200">
-                            <div className="flex items-center justify-between">
-                                <h2 className="text-2xl font-bold text-slate-900">
-                                    {selectedUser.isBanned ? "Unban User" : "Ban User"}
-                                </h2>
-                                <button
-                                    onClick={() => setShowBanModal(false)}
-                                    className="text-slate-400 hover:text-slate-600"
-                                >
-                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-                        <div className="p-6 space-y-4">
-                            <p className="text-slate-700">
-                                {selectedUser.isBanned
-                                    ? `Are you sure you want to unban ${selectedUser.name || selectedUser.email}?`
-                                    : `Are you sure you want to ban ${selectedUser.name || selectedUser.email}?`
-                                }
-                            </p>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Username</label>
+                        <input
+                            type="text"
+                            value={editForm.username}
+                            onChange={(e) => setEditForm({ ...editForm, username: e.target.value })}
+                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="@username"
+                        />
+                    </div>
 
-                            {!selectedUser.isBanned && (
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Role</label>
+                        <select
+                            value={editForm.role}
+                            disabled={currentUser?.role === "admin" && currentUser?._id === selectedUser?._id}
+                            onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
+                            className={`w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${currentUser?.role === "admin" && currentUser?._id === selectedUser?._id ? "bg-slate-100 text-slate-500 cursor-not-allowed" : ""}`}
+                        >
+                            <option value="student">Student</option>
+                            <option value="tester">Tester</option>
+                            {currentUser?.role === "superadmin" && (
                                 <>
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-2">Ban Duration</label>
-                                        <div className="space-y-2">
-                                            <label className="flex items-center">
-                                                <input
-                                                    type="radio"
-                                                    checked={banDurationType === "permanent"}
-                                                    onChange={() => setBanDurationType("permanent")}
-                                                    className="mr-2"
-                                                />
-                                                <span className="text-sm">Permanent</span>
-                                            </label>
-                                            <label className="flex items-center">
-                                                <input
-                                                    type="radio"
-                                                    checked={banDurationType === "temporary"}
-                                                    onChange={() => setBanDurationType("temporary")}
-                                                    className="mr-2"
-                                                />
-                                                <span className="text-sm">Temporary</span>
-                                            </label>
-                                        </div>
-                                    </div>
-
-                                    {banDurationType === "temporary" && (
-                                        <div>
-                                            <label className="block text-sm font-medium text-slate-700 mb-2">Duration (minutes)</label>
-                                            <select
-                                                value={banDuration}
-                                                onChange={(e) => setBanDuration(parseInt(e.target.value))}
-                                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
-                                            >
-                                                <option value={60}>1 hour</option>
-                                                <option value={360}>6 hours</option>
-                                                <option value={720}>12 hours</option>
-                                                <option value={1440}>1 day</option>
-                                                <option value={10080}>1 week</option>
-                                                <option value={43200}>30 days</option>
-                                            </select>
-                                        </div>
-                                    )}
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-2">Reason (optional)</label>
-                                        <textarea
-                                            value={banReason}
-                                            onChange={(e) => setBanReason(e.target.value)}
-                                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
-                                            rows={3}
-                                            placeholder="Enter reason for banning..."
-                                        />
-                                    </div>
+                                    <option value="admin">Admin</option>
+                                    <option value="superadmin">Super Admin</option>
                                 </>
                             )}
+                        </select>
+                    </div>
 
-                            <div className="flex gap-3 pt-4">
-                                <button
-                                    onClick={() => setShowBanModal(false)}
-                                    className="flex-1 px-4 py-2 border border-slate-300 rounded-lg font-medium text-slate-700 hover:bg-slate-50"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={handleBanUser}
-                                    className={`flex-1 px-4 py-2 rounded-lg font-medium text-white ${selectedUser.isBanned
-                                        ? "bg-green-600 hover:bg-green-700"
-                                        : "bg-red-600 hover:bg-red-700"
-                                        }`}
-                                >
-                                    {selectedUser.isBanned ? "Unban User" : "Ban User"}
-                                </button>
-                            </div>
-                        </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Branch</label>
+                        <input
+                            type="text"
+                            value={editForm.branch}
+                            onChange={(e) => setEditForm({ ...editForm, branch: e.target.value })}
+                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="e.g., Computer Science"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Year</label>
+                        <input
+                            type="number"
+                            value={editForm.year}
+                            onChange={(e) => setEditForm({ ...editForm, year: e.target.value === "" ? "" : parseInt(e.target.value) })}
+                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            min="1"
+                            max="5"
+                        />
+                    </div>
+
+                    <div className="flex gap-3 pt-4">
+                        <button
+                            onClick={() => setShowEditModal(false)}
+                            className="flex-1 px-4 py-2 border border-slate-300 rounded-lg font-medium text-slate-700 hover:bg-slate-50"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={handleUpdateUser}
+                            className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700"
+                        >
+                            Save Changes
+                        </button>
                     </div>
                 </div>
-            )}
+            </div>
         </div>
+    )
+}
+
+{/* Delete Modal */ }
+{
+    showDeleteModal && selectedUser && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-md flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full border-2 border-black">
+                <div className="p-6 border-b border-slate-200">
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-2xl font-bold text-slate-900">Delete User</h2>
+                        <button
+                            onClick={() => setShowDeleteModal(false)}
+                            className="text-slate-400 hover:text-slate-600"
+                        >
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div className="p-6 space-y-4">
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
+                        <svg className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        <div>
+                            <h3 className="text-red-800 font-semibold">Warning: Irreversible Action</h3>
+                            <p className="text-red-700 text-sm mt-1">
+                                You are about to permanently delete <strong>{selectedUser.name || selectedUser.studentId}</strong>. This action cannot be undone.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="flex gap-3 pt-4">
+                        <button
+                            onClick={() => setShowDeleteModal(false)}
+                            className="flex-1 px-4 py-2 border border-slate-300 rounded-lg font-medium text-slate-700 hover:bg-slate-50"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={handleDeleteUser}
+                            className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700"
+                        >
+                            Delete User
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    )
+}
+
+{/* Ban Modal */ }
+{
+    showBanModal && selectedUser && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-md flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full border-2 border-black">
+                <div className="p-6 border-b border-slate-200">
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-2xl font-bold text-slate-900">
+                            {selectedUser.isBanned ? "Unban User" : "Ban User"}
+                        </h2>
+                        <button
+                            onClick={() => setShowBanModal(false)}
+                            className="text-slate-400 hover:text-slate-600"
+                        >
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div className="p-6 space-y-4">
+                    <p className="text-slate-700">
+                        {selectedUser.isBanned
+                            ? `Are you sure you want to unban ${selectedUser.name || selectedUser.email}?`
+                            : `Are you sure you want to ban ${selectedUser.name || selectedUser.email}?`
+                        }
+                    </p>
+
+                    {!selectedUser.isBanned && (
+                        <>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-2">Ban Duration</label>
+                                <div className="space-y-2">
+                                    <label className="flex items-center">
+                                        <input
+                                            type="radio"
+                                            checked={banDurationType === "permanent"}
+                                            onChange={() => setBanDurationType("permanent")}
+                                            className="mr-2"
+                                        />
+                                        <span className="text-sm">Permanent</span>
+                                    </label>
+                                    <label className="flex items-center">
+                                        <input
+                                            type="radio"
+                                            checked={banDurationType === "temporary"}
+                                            onChange={() => setBanDurationType("temporary")}
+                                            className="mr-2"
+                                        />
+                                        <span className="text-sm">Temporary</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            {banDurationType === "temporary" && (
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">Duration (minutes)</label>
+                                    <select
+                                        value={banDuration}
+                                        onChange={(e) => setBanDuration(parseInt(e.target.value))}
+                                        className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                                    >
+                                        <option value={60}>1 hour</option>
+                                        <option value={360}>6 hours</option>
+                                        <option value={720}>12 hours</option>
+                                        <option value={1440}>1 day</option>
+                                        <option value={10080}>1 week</option>
+                                        <option value={43200}>30 days</option>
+                                    </select>
+                                </div>
+                            )}
+
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-2">Reason (optional)</label>
+                                <textarea
+                                    value={banReason}
+                                    onChange={(e) => setBanReason(e.target.value)}
+                                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                                    rows={3}
+                                    placeholder="Enter reason for banning..."
+                                />
+                            </div>
+                        </>
+                    )}
+
+                    <div className="flex gap-3 pt-4">
+                        <button
+                            onClick={() => setShowBanModal(false)}
+                            className="flex-1 px-4 py-2 border border-slate-300 rounded-lg font-medium text-slate-700 hover:bg-slate-50"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={handleBanUser}
+                            className={`flex-1 px-4 py-2 rounded-lg font-medium text-white ${selectedUser.isBanned
+                                ? "bg-green-600 hover:bg-green-700"
+                                : "bg-red-600 hover:bg-red-700"
+                                }`}
+                        >
+                            {selectedUser.isBanned ? "Unban User" : "Ban User"}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    )
+}
+        </div >
     );
 }
