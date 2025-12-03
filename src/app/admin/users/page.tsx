@@ -20,6 +20,7 @@ interface User {
     mobileNumber?: string;
     gender?: string;
     profilePhoto?: string;
+    username?: string;
 }
 
 export default function AdminUsersPage() {
