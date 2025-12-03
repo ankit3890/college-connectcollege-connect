@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import SearchBox from "@/components/syllabus_components/SearchBox";
 import Link from "next/link";
@@ -8,6 +8,22 @@ import Link from "next/link";
 export default function SyllabusSearchPage() {
     const [results, setResults] = useState<any[]>([]);
     const [searching, setSearching] = useState(false);
+
+    useEffect(() => {
+        // Fetch all subjects on mount
+        const fetchAll = async () => {
+            try {
+                const res = await fetch('/api/syllabus/search');
+                const data = await res.json();
+                if (data.results) {
+                    setResults(data.results);
+                }
+            } catch (e) {
+                console.error("Failed to fetch subjects", e);
+            }
+        };
+        fetchAll();
+    }, []);
 
     return (
         <div className="min-h-screen bg-slate-100">
@@ -44,7 +60,7 @@ export default function SyllabusSearchPage() {
                     <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
                         <div className="px-6 py-4 border-b border-slate-200">
                             <h2 className="text-lg font-semibold text-slate-900">
-                                Search Results ({results.length})
+                                Subjects ({results.length})
                             </h2>
                         </div>
                         <div className="overflow-x-auto">

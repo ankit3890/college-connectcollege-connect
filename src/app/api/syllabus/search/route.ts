@@ -15,7 +15,39 @@ export async function GET(req: NextRequest) {
         const searchParams = req.nextUrl.searchParams;
         const q = searchParams.get("q") || "";
 
-        if (!q) return NextResponse.json({ q, results: [] });
+        if (!q) {
+            // Return all subjects from Documents
+            const docs = await DocumentModel.find({}).lean();
+            const allSubjects = new Map<string, any>();
+
+            for (const doc of docs) {
+                const entries = doc.metadata?.entries || [];
+                for (const entry of entries) {
+                    const key = entry.subjectCode || entry.subjectName;
+                    // Ensure we have a valid key and it's not already added
+                    if (key && !allSubjects.has(key)) {
+                        allSubjects.set(key, {
+                            ref: `${doc._id}::${entry.sourcePage || 1}`,
+                            id: doc._id,
+                            entryId: entry.id,
+                            matchData: {
+                                metadata: {
+                                    title: doc.title,
+                                    subject: entry.subjectName,
+                                    code: entry.subjectCode,
+                                    pageNumber: entry.sourcePage || 1,
+                                    text: ""
+                                }
+                            }
+                        });
+                    }
+                }
+            }
+            const results = Array.from(allSubjects.values());
+            // Sort by code
+            results.sort((a, b) => (a.matchData.metadata.code || "").localeCompare(b.matchData.metadata.code || ""));
+            return NextResponse.json({ q, results });
+        }
 
         // Full text search on Pages
         // Full text search on Pages
