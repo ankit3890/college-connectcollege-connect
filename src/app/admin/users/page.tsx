@@ -39,11 +39,13 @@ export default function AdminUsersPage() {
 
     // Edit form state
     const [editForm, setEditForm] = useState<{
+        studentId: string;
         name: string;
         role: string;
         branch: string;
         year: number | string;
     }>({
+        studentId: "",
         name: "",
         role: "",
         branch: "",
@@ -122,6 +124,7 @@ export default function AdminUsersPage() {
     function openEditModal(user: User) {
         setSelectedUser(user);
         setEditForm({
+            studentId: user.studentId || "",
             name: user.name || "",
             role: user.role || "student",
             branch: user.branch || "",
@@ -395,7 +398,7 @@ export default function AdminUsersPage() {
                                                         </button>
 
                                                         {/* Only show Edit/Ban if allowed */}
-                                                        {(currentUser?.role === "superadmin" || (currentUser?.role === "admin" && user.role === "student")) && (
+                                                        {(currentUser?.role === "superadmin" || (currentUser?.role === "admin" && (user.role === "student" || user._id === currentUser._id))) && (
                                                             <>
                                                                 <span className="text-slate-300">|</span>
                                                                 <button
@@ -527,6 +530,17 @@ export default function AdminUsersPage() {
                             </div>
                         </div>
                         <div className="p-6 space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-2">Student ID (Username)</label>
+                                <input
+                                    type="text"
+                                    value={editForm.studentId}
+                                    onChange={(e) => setEditForm({ ...editForm, studentId: e.target.value })}
+                                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    placeholder="202412345678901"
+                                />
+                            </div>
+
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-2">Full Name</label>
                                 <input

@@ -57,6 +57,7 @@ export async function POST(req: Request) {
       role, // only used if superadmin
     } = body as {
       userId: string;
+      studentId?: string;
       name?: string;
       email?: string;
       mobileNumber?: string;
@@ -74,8 +75,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ msg: "User not found" }, { status: 404 });
     }
 
-    // 🔒 Security: Admins can ONLY edit students
-    if (adminUser.role === "admin" && targetUser.role !== "student") {
+    // 🔒 Security: Admins can ONLY edit students OR themselves
+    const isSelf = adminUser._id.equals(targetUser._id);
+    if (adminUser.role === "admin" && targetUser.role !== "student" && !isSelf) {
       return NextResponse.json(
         { msg: "Admin cannot edit role of other admin or superadmin" },
         { status: 403 }
@@ -83,6 +85,7 @@ export async function POST(req: Request) {
     }
 
     const oldData = {
+      studentId: targetUser.studentId,
       name: targetUser.name,
       email: targetUser.email,
       mobileNumber: targetUser.mobileNumber,
@@ -90,6 +93,14 @@ export async function POST(req: Request) {
       year: targetUser.year,
       role: targetUser.role,
     };
+
+    if (body.studentId && body.studentId !== targetUser.studentId) {
+      const existing = await User.findOne({ studentId: body.studentId });
+      if (existing) {
+        return NextResponse.json({ msg: "Student ID already taken" }, { status: 400 });
+      }
+      targetUser.studentId = body.studentId;
+    }
 
     if (typeof name === "string") targetUser.name = name;
     if (typeof email === "string") targetUser.email = email;
@@ -114,7 +125,7 @@ export async function POST(req: Request) {
 
     // Build changedFields diff for UPDATE_USER
     const changedFields: Record<string, { from: any; to: any }> = {};
-    (["name", "email", "mobileNumber", "branch", "year"] as const).forEach(
+    (["studentId", "name", "email", "mobileNumber", "branch", "year"] as const).forEach(
       (key) => {
         const before = (oldData as any)[key];
         const after = (targetUser as any)[key];
