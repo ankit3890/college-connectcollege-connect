@@ -223,9 +223,7 @@ export default async function SubjectPage({ params, searchParams }: { params: Pr
                     )}
                 </div>
 
-                <div className="mt-4 text-xs text-slate-500 text-center">
-                    * Data extracted from {doc.filename} (Page {entry?.sourcePage})
-                </div>
+
             </main>
         </>
     );
