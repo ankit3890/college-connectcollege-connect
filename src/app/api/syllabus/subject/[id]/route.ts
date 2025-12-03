@@ -1,13 +1,16 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { connectDb } from "@/lib/syllabus/db";
-import { DocumentModel } from "@/models/syllabus/Document";
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
         await connectDb();
+
+        // Import model after connection is established
+        const { DocumentModel } = await import("@/models/syllabus/Document");
+
         const { id } = await params;
 
         const doc = await DocumentModel.findById(id);
