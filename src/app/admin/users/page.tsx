@@ -444,6 +444,7 @@ export default function AdminUsersPage() {
                                                         </button>
 
                                                         {/* Only show Edit/Ban if allowed */}
+                                                        {/* Edit Button */}
                                                         {(currentUser?.role === "superadmin" || (currentUser?.role === "admin" && (user.role === "student" || user.role === "tester" || user._id === currentUser._id))) && (
                                                             <>
                                                                 <span className="text-slate-300">|</span>
@@ -454,6 +455,12 @@ export default function AdminUsersPage() {
                                                                 >
                                                                     Edit
                                                                 </button>
+                                                            </>
+                                                        )}
+
+                                                        {/* Ban Button - NEVER show for self */}
+                                                        {user._id !== currentUser?._id && (currentUser?.role === "superadmin" || (currentUser?.role === "admin" && (user.role === "student" || user.role === "tester"))) && (
+                                                            <>
                                                                 <span className="text-slate-300">|</span>
                                                                 <button
                                                                     onClick={() => openBanModal(user)}
