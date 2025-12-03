@@ -85,7 +85,7 @@ export default async function SubjectPage({ params, searchParams }: { params: Pr
                 </div>
 
                 {/* Syllabus Content Card */}
-                <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+                <div className="bg-white rounded-2xl shadow-lg overflow-hidden border-2 border-black">
 
                     {/* Header Row */}
                     <div className="grid grid-cols-12 border-b border-black text-sm">
