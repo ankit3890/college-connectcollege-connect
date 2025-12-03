@@ -8,6 +8,9 @@ import fs from "fs";
 import path from "path";
 import { writeFile } from "fs/promises";
 
+// Mark this route as dynamic to prevent pre-rendering at build time
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: NextRequest) {
     try {
         await connectDb();

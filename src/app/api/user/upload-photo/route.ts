@@ -16,11 +16,10 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
+// Modern Next.js App Router configuration
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 
 export async function POST(req: Request) {
   try {

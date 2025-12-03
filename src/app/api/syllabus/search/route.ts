@@ -4,6 +4,8 @@ import { connectDb } from "@/lib/syllabus/db";
 import { PageModel } from "@/models/syllabus/Page";
 import { DocumentModel } from "@/models/syllabus/Document"; // Ensure schema is registered
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest) {
     try {
         await connectDb();

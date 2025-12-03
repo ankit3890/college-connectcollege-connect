@@ -10,7 +10,7 @@ export interface Page {
   topics?: string[];
 }
 
-import { SyllabusEntry } from "../models/SyllabusEntry";
+import { SyllabusEntry } from "../../models/syllabus/SyllabusEntry";
 
 export interface ParsedDoc {
   id: string;
