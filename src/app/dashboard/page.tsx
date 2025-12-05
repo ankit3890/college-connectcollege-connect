@@ -116,7 +116,7 @@ export default function DashboardPage() {
 
           {/* Profile Card */}
           <Link
-            href={user?.username ? `/u/${user.username}` : "/profile"}
+            href={`/u/${user?.username || user?.studentId}`}
             onClick={() => logActivity("ACCESS_PROFILE", "Accessed Profile")}
             className="group bg-white dark:bg-slate-800 rounded-xl shadow-md p-4 hover:shadow-lg transition-all duration-200 border-2 border-black dark:border-slate-700 hover:border-purple-500 dark:hover:border-purple-500"
           >

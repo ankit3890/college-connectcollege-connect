@@ -144,7 +144,7 @@ export default function Navbar() {
                   Dashboard
                 </Link>
 
-                <Link href={user.username ? `/u/${user.username}` : "/profile"} className={linkClass(user.username ? `/u/${user.username}` : "/profile")}>
+                <Link href={`/u/${user.username || user.studentId}`} className={linkClass(`/u/${user.username || user.studentId}`)}>
                   Profile
                 </Link>
 
@@ -216,8 +216,8 @@ export default function Navbar() {
                 </Link>
 
                 <Link
-                  href={user.username ? `/u/${user.username}` : "/profile"}
-                  className={linkClass(user.username ? `/u/${user.username}` : "/profile", true)}
+                  href={`/u/${user.username || user.studentId}`}
+                  className={linkClass(`/u/${user.username || user.studentId}`, true)}
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Profile
