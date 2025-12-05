@@ -803,9 +803,9 @@ export default function AttendancePage() {
             </div>
 
             {/* Subject cards (table replaced by cards) / Graph view */}
-            <section className="rounded-xl bg-white border shadow-sm p-4 sm:p-5 space-y-3 print:border-none print:shadow-none print:p-0">
+            <section className="rounded-xl bg-white dark:bg-slate-800 border dark:border-slate-700 shadow-sm p-4 sm:p-5 space-y-3 print:border-none print:shadow-none print:p-0">
               <div className="flex items-center justify-between mb-1 print:hidden">
-                <h2 className="text-sm font-semibold">
+                <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
                   {showGraph ? "Attendance Analytics" : "Subject-wise Attendance"}
                 </h2>
                 <div className="flex items-center gap-2">
@@ -813,7 +813,7 @@ export default function AttendancePage() {
                     type="button"
                     onClick={() => setShowGraph(false)}
                     aria-pressed={!showGraph}
-                    className={`px-3 py-1 text-xs font-semibold rounded border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 ${!showGraph ? "bg-slate-900 text-white" : "bg-white text-slate-900 hover:bg-slate-50"}`}
+                    className={`px-3 py-1 text-xs font-semibold rounded border border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-400 ${!showGraph ? "bg-slate-900 text-white" : "bg-white dark:bg-slate-700 text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-600"}`}
                   >
                     Show Table
                   </button>
@@ -821,7 +821,7 @@ export default function AttendancePage() {
                     type="button"
                     onClick={() => setShowGraph(true)}
                     aria-pressed={showGraph}
-                    className={`px-3 py-1 text-xs font-semibold rounded border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 ${showGraph ? "bg-slate-900 text-white" : "bg-white text-slate-900 hover:bg-slate-50"}`}
+                    className={`px-3 py-1 text-xs font-semibold rounded border border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-400 ${showGraph ? "bg-slate-900 text-white" : "bg-white dark:bg-slate-700 text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-600"}`}
                   >
                     Show Graph
                   </button>
@@ -829,7 +829,7 @@ export default function AttendancePage() {
               </div>
 
               {courses.length === 0 ? (
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-slate-500 dark:text-slate-400">
                   No attendance data found for this account.
                 </p>
               ) : (
