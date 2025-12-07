@@ -21,7 +21,29 @@ interface User {
     mobileNumber?: string;
     gender?: string;
     profilePhoto?: string;
+    avatarUrl?: string; // Correct field for Base64 images
     username?: string;
+}
+
+function UserAvatar({ src, alt, fallbackChar }: { src?: string, alt: string, fallbackChar: string }) {
+    const [error, setError] = useState(false);
+
+    if (!src || error) {
+        return (
+            <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-600 flex items-center justify-center">
+                <span className="text-slate-600 dark:text-slate-200 font-medium">{fallbackChar}</span>
+            </div>
+        );
+    }
+
+    return (
+        <img 
+            src={src} 
+            alt={alt} 
+            className="w-10 h-10 rounded-full object-cover" 
+            onError={() => setError(true)}
+        />
+    );
 }
 
 export default function AdminUsersPage() {
@@ -366,17 +388,17 @@ export default function AdminUsersPage() {
                                 <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
                                     {filteredUsers.map((user) => {
                                         const displayName = user.name || `${user.firstName || ""} ${user.lastName || ""}`.trim() || "No name";
+                                        const displayImage = user.avatarUrl || user.profilePhoto; // Prioritize new avatar field
+
                                         return (
                                             <tr key={user._id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
                                                 <td className="px-6 py-4">
                                                     <div className="flex items-center gap-3">
-                                                        {user.profilePhoto ? (
-                                                            <img src={user.profilePhoto} alt="" className="w-10 h-10 rounded-full object-cover" />
-                                                        ) : (
-                                                            <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-600 flex items-center justify-center">
-                                                                <span className="text-slate-600 dark:text-slate-200 font-medium">{displayName.charAt(0)}</span>
-                                                            </div>
-                                                        )}
+                                                        <UserAvatar 
+                                                            src={displayImage} 
+                                                            alt={displayName} 
+                                                            fallbackChar={displayName.charAt(0)} 
+                                                        />
                                                         <div>
                                                             <div className="font-medium text-slate-900 dark:text-white">{displayName}</div>
                                                             <div className="text-sm text-slate-500 dark:text-slate-400">{user.email}</div>
@@ -578,9 +600,9 @@ export default function AdminUsersPage() {
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Role</label>
                                 <select
                                     value={editForm.role}
-                                    disabled={currentUser?._id === selectedUser?._id}
+                                    disabled={currentUser?._id === selectedUser?._id || (selectedUser?.role === "superadmin")}
                                     onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
-                                    className={`w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white ${currentUser?._id === selectedUser?._id ? "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 cursor-not-allowed" : ""}`}
+                                    className={`w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white ${currentUser?._id === selectedUser?._id || selectedUser?.role === "superadmin" ? "bg-slate-100 dark:bg-slate-900 text-slate-500 dark:text-slate-400 cursor-not-allowed" : ""}`}
                                 >
                                     <option value="student">Student</option>
                                     <option value="tester">Tester</option>

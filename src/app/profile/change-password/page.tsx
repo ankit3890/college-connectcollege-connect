@@ -96,7 +96,7 @@ export default function ChangePasswordPage() {
       <main className="max-w-md mx-auto px-4 py-10">
         <h1 className="text-2xl font-bold mb-2 text-slate-900 dark:text-white">Change Password</h1>
         <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-          Change your account password for CollageConnect.
+          Change your account password for CollegeConnect.
         </p>
 
         {message && (

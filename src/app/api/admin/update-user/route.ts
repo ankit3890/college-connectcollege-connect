@@ -132,7 +132,19 @@ export async function POST(req: Request) {
       } else {
         // Super Admin can assign any role to OTHERS
         if (adminUser.role === "superadmin") {
+          console.log(`[DEBUG] Superadmin Logic: TargetRole=${targetUser.role}, RequestedRole=${role}`);
+          
           if (role !== targetUser.role) {
+            // 🛡️ Security: One Super Admin cannot change role of another Super Admin
+            // Check case-insensitive just in case
+            if (String(targetUser.role).toLowerCase() === "superadmin") {
+              console.log("[DEBUG] Blocked attempt to change superadmin role");
+              return NextResponse.json(
+                { msg: "Super admins cannot change the role of other super admins" },
+                { status: 403 }
+              );
+            }
+
             roleChanged = true;
             oldRole = targetUser.role;
             newRole = role;

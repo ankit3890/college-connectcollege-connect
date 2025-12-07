@@ -74,7 +74,7 @@ export default function ResetPasswordPage() {
       <main className="max-w-md mx-auto px-4 py-10">
         <h1 className="text-2xl font-bold mb-2">Reset Password</h1>
         <p className="text-sm text-slate-600 mb-4">
-          Set a new password for your CollageConnect account using the reset link.
+          Set a new password for your CollegeConnect account using the reset link.
         </p>
 
         {message && (

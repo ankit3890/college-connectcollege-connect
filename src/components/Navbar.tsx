@@ -10,6 +10,7 @@ interface CurrentUser {
   studentId?: string;
   role?: "student" | "admin" | "superadmin";
   username?: string;
+  hasSyncedFromCyberVidya?: boolean;
 }
 
 interface MaintenanceConfig {
@@ -46,6 +47,7 @@ export default function Navbar() {
         studentId: u.studentId,
         role: u.role,
         username: u.username,
+        hasSyncedFromCyberVidya: u.hasSyncedFromCyberVidya,
       });
       console.log("✅ User set:", u);
     } catch (err) {
@@ -122,6 +124,26 @@ export default function Navbar() {
               ? maintenance.maintenanceMessage
               : "The system is currently under maintenance. Some features may be limited."}
           </p>
+        </div>
+      )}
+
+      {/* Sync Profile Banner */}
+      {user && !user.hasSyncedFromCyberVidya && (
+        <div className="w-full bg-red-50 dark:bg-red-900 border-b border-red-200 dark:border-red-700 transition-colors">
+          <Link 
+            href="/profile/edit" 
+            className="max-w-6xl mx-auto px-4 py-2 flex items-center justify-center gap-2 text-xs sm:text-sm text-red-700 dark:text-white hover:text-red-800 dark:hover:text-red-100 hover:underline transition-all group"
+          >
+            <span className="flex items-center justify-center w-5 h-5 rounded-full bg-red-100 dark:bg-red-800 text-red-600 dark:text-white">
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </span>
+            <span>Your profile is not synced with CyberVidya. <span className="font-bold">Sync Now</span></span>
+            <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+            </svg>
+          </Link>
         </div>
       )}
 

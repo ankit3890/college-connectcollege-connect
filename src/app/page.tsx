@@ -149,6 +149,31 @@ export default function HomePage() {
                 </div>
               </Link>
 
+              {/* Exam Marks (External) */}
+              <Link
+                href="https://kiet-exams.codetantra.com/secure/home/view-results.jsp"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => logActivity("ACCESS_EXAM_MARKS", "Accessed Exam Marks")}
+                className="group bg-white dark:bg-slate-800 rounded-xl shadow-md p-4 hover:shadow-lg transition-all duration-200 border-2 border-black dark:border-slate-700 hover:border-orange-500 dark:hover:border-orange-500"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-orange-50 dark:bg-orange-900/30 rounded-lg group-hover:bg-orange-100 dark:group-hover:bg-orange-900/50 transition-colors">
+                    <svg className="w-8 h-8 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-1 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
+                      Exam Marks
+                    </h2>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                      Check your exam results
+                    </p>
+                  </div>
+                </div>
+              </Link>
+
               {/* Messages / Chat */}
               <Link
                 href={user ? "/chat" : "/login"}
@@ -245,6 +270,14 @@ export default function HomePage() {
             </div>
           </div>
         )}
+
+
+        {/* Footer */}
+        <div className="mt-12 text-center pb-8">
+          <Link href="/terms" className="text-xs text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 underline underline-offset-2 transition-colors">
+            Privacy Policy & Terms and Conditions
+          </Link>
+        </div>
 
       </main>
     </div>

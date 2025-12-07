@@ -311,9 +311,13 @@ export default function PublicProfilePage() {
                                 <h1 className="text-lg sm:text-2xl font-bold text-slate-900 dark:text-white">
                                     {profile.name}
                                 </h1>
-                                {profile.hasSyncedFromCyberVidya && (
+                                {profile.hasSyncedFromCyberVidya ? (
                                     <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 mb-1 border border-green-200 dark:border-green-800">
                                         Details synced to CyberVidya ✅
+                                    </span>
+                                ) : (
+                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 mb-1 border border-red-200 dark:border-red-800">
+                                        Details not synced to CyberVidya ❌
                                     </span>
                                 )}
                             </div>
