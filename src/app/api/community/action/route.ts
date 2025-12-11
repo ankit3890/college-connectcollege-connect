@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
       community.members = community.members.filter((m: string) => m !== targetUser);
       if (!community.bannedUsers) community.bannedUsers = [];
       if (!community.bannedUsers.some((u: any) => u.username === targetUser)) {
-          community.bannedUsers.push({ username: targetUser, reason: "Banned by admin", at: new Date() });
+          community.bannedUsers.push({ username: targetUser, reason: "Banned by admin", bannedAt: new Date() });
       }
   } else if (action === 'unban') {
        if (community.bannedUsers) {
