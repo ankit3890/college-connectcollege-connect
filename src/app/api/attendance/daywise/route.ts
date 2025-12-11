@@ -29,23 +29,15 @@ interface DaywiseResponse {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { courseCompId, courseId, sessionId, studentId, cyberId, cyberPass } = body || {};
+    const { courseCompId, courseId, sessionId, studentId, token, uid, authPref } = body || {};
 
-    if (!courseCompId || !courseId || !studentId || !cyberId || !cyberPass) {
+    if (!courseCompId || !courseId || !studentId || !token) {
       return NextResponse.json(
-        { msg: "Missing required fields for daywise attendance" },
+        { msg: "Missing required fields (token) for daywise attendance" },
         { status: 400 }
       );
     }
 
-    // 1) Login with student credentials
-    console.log("⏩ CyberVidya login for daywise:", cyberId);
-    const login = await loginToCyberVidya(cyberId, cyberPass);
-    if (!login) {
-      return NextResponse.json({ msg: "CyberVidya login failed" }, { status: 401 });
-    }
-
-    const { token, uid, authPref } = login;
     const headers: HeadersInit = {
       Accept: "application/json",
       "Content-Type": "application/json",

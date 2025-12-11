@@ -10,21 +10,17 @@ export async function GET(req: NextRequest) {
     const cyberPass = url.searchParams.get("cyberPass");
     const weekStartDate = url.searchParams.get("weekStartDate");
     const weekEndDate = url.searchParams.get("weekEndDate");
+    const token = url.searchParams.get("token");
+    const uid = url.searchParams.get("uid");
+    const authPref = url.searchParams.get("authPref");
 
-    if (!cyberId || !cyberPass || !weekStartDate || !weekEndDate) {
+    if (!token || !weekStartDate || !weekEndDate) {
       return NextResponse.json(
-        { msg: "Missing fields for schedule API" },
+        { msg: "Missing token or dates for schedule API" },
         { status: 400 }
       );
     }
 
-    // login first
-    const login = await loginToCyberVidya(cyberId, cyberPass);
-    if (!login) {
-      return NextResponse.json({ msg: "Login failed" }, { status: 401 });
-    }
-
-    const { token, uid, authPref } = login;
     const headers = {
       Accept: "application/json",
       Authorization: `${authPref}${token}`,

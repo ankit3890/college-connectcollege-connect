@@ -1,6 +1,7 @@
 // src/app/api/attendance/login/route.ts
 import { NextResponse } from "next/server";
-import { loginToCyberVidya, AttendanceStudentData } from "@/lib/cybervidya";
+import { AttendanceStudentData } from "@/lib/cybervidya";
+import { loginWithPuppeteer } from "@/lib/puppeteer-auth";
 
 const CYBER_BASE = "https://kiet.cybervidya.net";
 
@@ -58,17 +59,14 @@ interface AttendanceResponse {
 
 export async function POST(req: Request) {
   try {
-    const { cyberId, cyberPass } = await req.json();
+    const body = await req.json().catch(() => ({})); // Handle empty body
+    const { cyberId, cyberPass } = body;
 
-    if (!cyberId || !cyberPass) {
-      return NextResponse.json(
-        { msg: "Missing CyberVidya ID or password" },
-        { status: 400 }
-      );
-    }
+    // validation removed for manual login strategy
+    // if (!cyberId || !cyberPass) ...
 
-    // 1) Login to CyberVidya using student credentials
-    const login = await loginToCyberVidya(cyberId, cyberPass);
+    // 1) Login to CyberVidya using Puppeteer (Browser Automation)
+    const login = await loginWithPuppeteer(cyberId, cyberPass);
     if (!login) {
       return NextResponse.json(
         { msg: "Invalid CyberVidya credentials" },
@@ -239,6 +237,9 @@ export async function POST(req: Request) {
       msg: "Attendance loaded from CyberVidya",
       student: studentInfo,
       courses,
+      token,
+      uid,
+      authPref,
     });
   } catch (err) {
     console.error("POST /api/attendance/login error:", err);

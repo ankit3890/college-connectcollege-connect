@@ -47,17 +47,18 @@ interface ScheduleItem {
 }
 
 export default function AttendancePage() {
-  const [cyberId, setCyberId] = useState("");
-  const [cyberPass, setCyberPass] = useState("");
-  const [rememberMe, setRememberMe] = useState(false);
-  const [acceptedTerms, setAcceptedTerms] = useState(false);
-  const [showTerms, setShowTerms] = useState(false);
+  // Credentials removed for manual login strategy
+  // Credentials removed for manual login strategy
 
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const [hasLoggedIn, setHasLoggedIn] = useState(false);
+  const [authToken, setAuthToken] = useState<string>("");
+  const [authUid, setAuthUid] = useState<number>(0);
+  const [authPref, setAuthPref] = useState<string>("");
+  
   const [student, setStudent] = useState<StudentInfo | null>(null);
   const [courses, setCourses] = useState<AttendanceCourse[]>([]);
 
@@ -97,17 +98,7 @@ export default function AttendancePage() {
     return () => clearTimeout(t);
   }, [msg]);
 
-  // Check localStorage for remembered credentials
-  useEffect(() => {
-    const storedId = localStorage.getItem("cyberId");
-    const storedPass = localStorage.getItem("cyberPass");
-    if (storedId && storedPass) {
-      setCyberId(storedId);
-      setCyberPass(storedPass);
-      setRememberMe(true);
-      setAcceptedTerms(true); // If they remembered, they must have accepted terms before
-    }
-  }, []);
+  // LocalStorage check removed as we don't store credentials anymore
 
   function courseKey(c: AttendanceCourse): string {
     return `${c.courseCode || c.courseId || "C"}-${c.componentName || ""}`;
@@ -118,22 +109,13 @@ export default function AttendancePage() {
     setError(null);
     setMsg(null);
 
-    if (!cyberId || !cyberPass) {
-      setError("Please enter your CyberVidya credentials.");
-      return;
-    }
-
-    if (!acceptedTerms) {
-      setError("You must accept the Terms and Conditions to proceed.");
-      return;
-    }
-
     setLoading(true);
     try {
+      // Manual Login Strategy: No credentials sent
       const res = await fetch("/api/attendance/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cyberId, cyberPass }),
+        body: JSON.stringify({}), 
       });
 
       const data = await res.json();
@@ -150,15 +132,10 @@ export default function AttendancePage() {
       setStudent(data.student || null);
       setCourses(data.courses || []);
       setHasLoggedIn(true);
-
-      // Handle Remember Me
-      if (rememberMe) {
-        localStorage.setItem("cyberId", cyberId);
-        localStorage.setItem("cyberPass", cyberPass);
-      } else {
-        localStorage.removeItem("cyberId");
-        localStorage.removeItem("cyberPass");
-      }
+      
+      setAuthToken(data.token || "");
+      setAuthUid(data.uid || 0);
+      setAuthPref(data.authPref || "");
 
     } catch (err) {
       console.error(err);
@@ -172,17 +149,11 @@ export default function AttendancePage() {
   }
 
   function handleLogout() {
-    setCyberPass("");
-    setCyberId("");
     setHasLoggedIn(false);
     setStudent(null);
     setCourses([]);
     setMsg(null);
     setError(null);
-    setRememberMe(false);
-    setAcceptedTerms(false);
-    localStorage.removeItem("cyberId");
-    localStorage.removeItem("cyberPass");
   }
 
   const overallPercentage = useMemo(() => {
@@ -227,8 +198,8 @@ export default function AttendancePage() {
       return;
     }
 
-    if (!cyberId || !cyberPass) {
-      setError("CyberVidya login expired. Please login again.");
+    if (!hasLoggedIn) {
+      setError("Please connect to CyberVidya first.");
       return;
     }
 
@@ -248,8 +219,12 @@ export default function AttendancePage() {
           courseId: course.courseId,
           sessionId: course.sessionId ?? null,
           studentId: course.studentId,
-          cyberId,
-          cyberPass,
+          cyberId: "", 
+          cyberPass: "",
+          // Pass captured auth token
+          token: authToken,
+          uid: authUid,
+          authPref: authPref
         }),
       });
 
@@ -289,8 +264,8 @@ export default function AttendancePage() {
   }
 
   async function handleOpenSchedule(course: AttendanceCourse) {
-    if (!cyberId || !cyberPass) {
-      setError("CyberVidya login expired. Please login again.");
+    if (!hasLoggedIn) {
+      setError("Please connect to CyberVidya first.");
       return;
     }
 
@@ -309,7 +284,7 @@ export default function AttendancePage() {
       const endStr = nextMonth.toISOString().split('T')[0];
 
       const scheduleRes = await fetch(
-        `/api/schedule?cyberId=${encodeURIComponent(cyberId)}&cyberPass=${encodeURIComponent(cyberPass)}&weekStartDate=${startStr}&weekEndDate=${endStr}`
+        `/api/schedule?weekStartDate=${startStr}&weekEndDate=${endStr}&token=${encodeURIComponent(authToken)}&uid=${authUid}&authPref=${encodeURIComponent(authPref)}`
       );
 
       if (scheduleRes.ok) {
@@ -404,8 +379,8 @@ export default function AttendancePage() {
 
   // --- NEW: Timetable handlers ---
   async function handleOpenTimetable() {
-    if (!cyberId || !cyberPass) {
-      setError("CyberVidya login expired. Please login again.");
+    if (!hasLoggedIn) {
+      setError("Please connect to CyberVidya first.");
       return;
     }
 
@@ -426,7 +401,7 @@ export default function AttendancePage() {
       const endStr = sunday.toISOString().split('T')[0];
 
       const scheduleRes = await fetch(
-        `/api/schedule?cyberId=${encodeURIComponent(cyberId)}&cyberPass=${encodeURIComponent(cyberPass)}&weekStartDate=${startStr}&weekEndDate=${endStr}`
+        `/api/schedule?weekStartDate=${startStr}&weekEndDate=${endStr}&token=${encodeURIComponent(authToken)}&uid=${authUid}&authPref=${encodeURIComponent(authPref)}`
       );
 
       if (scheduleRes.ok) {
@@ -545,83 +520,33 @@ export default function AttendancePage() {
 
               {/* Form */}
               <div className="p-6 sm:p-8 space-y-6">
-                <form onSubmit={handleSubmit} className="space-y-5">
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
-                      Cybervidya ID
-                    </label>
-                    <div className="relative">
-                      <input
-                        className="w-full rounded-lg border border-slate-200 dark:border-slate-600 px-4 py-3 text-sm bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:border-slate-900 dark:focus:border-white focus:ring-2 focus:ring-slate-900/10 dark:focus:ring-white/10 outline-none transition-all placeholder:text-slate-400"
-                        value={cyberId}
-                        onChange={(e) => setCyberId(e.target.value)}
-                        placeholder="e.g. 202412345678901"
-                      />
-                    </div>
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  
+                  {/* Manual Login Steps Guide */}
+                  <div className="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-5 border border-slate-100 dark:border-slate-600">
+                    <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wide mb-3">
+                      How to Connect:
+                    </h3>
+                    <ul className="space-y-3">
+                      <li className="flex gap-3 text-sm text-slate-600 dark:text-slate-300">
+                        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-xs">1</span>
+                        <span>Click <strong>Connect</strong> below. A browser window will open.</span>
+                      </li>
+                      <li className="flex gap-3 text-sm text-slate-600 dark:text-slate-300">
+                         <span className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-xs">2</span>
+                        <span><strong>CyberVidya Official Page</strong> will load.</span>
+                      </li>
+                      <li className="flex gap-3 text-sm text-slate-600 dark:text-slate-300">
+                         <span className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-xs">3</span>
+                        <span>Enter your <strong>ID, Password</strong> and solve the <strong>Captcha</strong> manually.</span>
+                      </li>
+                      <li className="flex gap-3 text-sm text-slate-600 dark:text-slate-300">
+                         <span className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-xs">4</span>
+                        <span>Click Login. We will auto-detect your session and load your attendance!</span>
+                      </li>
+                    </ul>
                   </div>
 
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
-                      Password
-                    </label>
-                    <div className="relative">
-                      <input
-                        className="w-full rounded-lg border border-slate-200 dark:border-slate-600 px-4 py-3 text-sm bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:border-slate-900 dark:focus:border-white focus:ring-2 focus:ring-slate-900/10 dark:focus:ring-white/10 outline-none transition-all placeholder:text-slate-400"
-                        type="password"
-                        value={cyberPass}
-                        onChange={(e) => setCyberPass(e.target.value)}
-                        placeholder="••••••••"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={rememberMe}
-                        onChange={(e) => setRememberMe(e.target.checked)}
-                        className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-slate-900 focus:ring-slate-900"
-                      />
-                      <span className="text-sm text-slate-600 dark:text-slate-400">Remember Me</span>
-                    </label>
-
-                    <div className="flex items-center gap-3">
-                      <div className="relative flex items-center">
-                        <input
-                          type="checkbox"
-                          id="terms"
-                          className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border-2 border-slate-200 dark:border-slate-600 transition-all checked:border-slate-900 dark:checked:border-white checked:bg-slate-900 dark:checked:bg-white hover:border-slate-300 dark:hover:border-slate-500"
-                          checked={acceptedTerms}
-                          onChange={(e) => setAcceptedTerms(e.target.checked)}
-                        />
-                        <svg
-                          className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white dark:text-black opacity-0 transition-opacity peer-checked:opacity-100"
-                          xmlns="http://www.w3.org/2000/svg"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="3"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          width="14"
-                          height="14"
-                        >
-                          <polyline points="20 6 9 17 4 12"></polyline>
-                        </svg>
-                      </div>
-                      <label htmlFor="terms" className="text-sm text-slate-600 dark:text-slate-400 select-none">
-                        I agree to the{" "}
-                        <button
-                          type="button"
-                          onClick={() => setShowTerms(true)}
-                          className="font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 hover:underline focus:outline-none"
-                        >
-                          Terms and Conditions
-                        </button>
-                      </label>
-                    </div>
-                  </div>
 
                   <button
                     type="submit"
@@ -634,10 +559,10 @@ export default function AttendancePage() {
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                        <span>Fetching Data...</span>
+                        <span>Waiting for Login in Popup...</span>
                       </>
                     ) : (
-                      "Access Dashboard"
+                      "Connect to CyberVidya"
                     )}
                   </button>
                 </form>
@@ -667,9 +592,7 @@ export default function AttendancePage() {
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
-                    {rememberMe
-                      ? "Credentials stored securely on your device."
-                      : "Your credentials are never stored."}
+                    Your credentials are never stored.
                   </p>
                 </div>
               </div>
@@ -1253,44 +1176,7 @@ export default function AttendancePage() {
           </>
         )}
       </main>
-      {/* Terms Modal */}
-      {showTerms && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md animate-in fade-in zoom-in-95 duration-200 rounded-2xl bg-white p-6 shadow-xl">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-bold text-slate-900">Terms and Conditions</h3>
-              <button
-                onClick={() => setShowTerms(false)}
-                className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
-              >
-                ✕
-              </button>
-            </div>
-            <div className="space-y-4 text-sm text-slate-600">
-              <p>
-                <strong>Data Privacy:</strong> We do not store any of your personal data, including your CyberID or password, on our servers.
-              </p>
-              <p>
-                <strong>Local Storage:</strong> If you choose to enable the &quot;Remember Me&quot; feature, your credentials will be stored locally on your own device to facilitate easier login in the future. You can clear this at any time by logging out or clearing your browser cache.
-              </p>
-              <p>
-                <strong>Liability:</strong> We are not responsible for any misuse of this application. By using this service, you agree to use it responsibly and at your own risk.
-              </p>
-            </div>
-            <div className="mt-6 flex justify-end">
-              <button
-                onClick={() => {
-                  setShowTerms(false);
-                  setAcceptedTerms(true);
-                }}
-                className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 transition-colors"
-              >
-                Accept & Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+
     </div>
   );
 }

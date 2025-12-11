@@ -122,12 +122,15 @@ export async function loginToCyberVidya(
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
+        "User-Agent": "Dalvik/2.1.0 (Linux; U; Android 11; Pixel 5 Build/RQ3A.211001.001)",
+        "Applicationlabel": "demo",
+        "Correlationid": "demo",
       },
       body: JSON.stringify({
         userName: cyberId,
         password: cyberPass,
-        device: "WEB",
-        version: null,
+        device: "ANDROID",
+        version: "VER 2.0",
       }),
     });
 
