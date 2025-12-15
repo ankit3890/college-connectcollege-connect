@@ -39,6 +39,8 @@ interface AttendanceComponentInfo {
   componentName?: string;
   numberOfPeriods?: number | string;
   numberOfPresent?: number | string;
+  numberOfSpecialAttendance?: number | string; // Added field
+  numberOfExtraAttendance?: number | string; // Correct key
   presentPercentage?: number | string;
   presentPercentageWith?: string;
   courseComponentId?: number;
@@ -58,25 +60,44 @@ interface AttendanceResponse {
 
 export async function POST(req: Request) {
   try {
-    const { cyberId, cyberPass } = await req.json();
+    const { cyberId, cyberPass, authToken, authUid } = await req.json();
 
-    if (!cyberId || !cyberPass) {
-      return NextResponse.json(
-        { msg: "Missing CyberVidya ID or password" },
-        { status: 400 }
-      );
+    let token = "";
+    let uid = 0;
+    let authPref = "GlobalEducation ";
+
+    // 1a) Manual Login (Priority)
+    if (authToken && authUid) {
+        console.log("⏩ Manual Login used");
+        // Handle Authorization header format: "GlobalEducation <token>"
+        const parts = authToken.trim().split(" ");
+        if (parts.length > 1) {
+            authPref = parts[0] + " ";
+            token = parts[1];
+        } else {
+            token = parts[0];
+            // keep default authPref
+        }
+        uid = Number(authUid);
+    } 
+    // 1b) Standard Login
+    else if (cyberId && cyberPass) {
+        const login = await loginToCyberVidya(cyberId, cyberPass);
+        if (!login) {
+            return NextResponse.json(
+                { msg: "Invalid CyberVidya credentials" },
+                { status: 401 }
+            );
+        }
+        token = login.token;
+        uid = login.uid;
+        authPref = login.authPref;
+    } else {
+        return NextResponse.json(
+            { msg: "Missing credentials (User/Pass or Token/UID)" },
+            { status: 400 }
+        );
     }
-
-    // 1) Login to CyberVidya using student credentials
-    const login = await loginToCyberVidya(cyberId, cyberPass);
-    if (!login) {
-      return NextResponse.json(
-        { msg: "Invalid CyberVidya credentials" },
-        { status: 401 }
-      );
-    }
-
-    const { token, uid, authPref } = login;
 
     const headers: HeadersInit = {
       Accept: "application/json",
@@ -182,6 +203,32 @@ export async function POST(req: Request) {
 
       const total = Number(comp.numberOfPeriods ?? 0) || 0;
       const present = Number(comp.numberOfPresent ?? 0) || 0;
+      
+      // Robustly find special attendance key
+      const extra = Number(comp.numberOfExtraAttendance || 0);
+      let special = extra;
+
+      if (special === 0) {
+        // Fuzzy search keys
+        const keys = Object.keys(comp);
+        for (const k of keys) {
+            const lower = k.toLowerCase();
+            // Skip known standard fields, percentages, and total periods
+            if (lower.includes('percent') || lower.includes('total') || lower === 'numberofpresent' || lower === 'numberofperiods' || lower.includes('absent')) continue;
+            
+            // Look for related keywords
+            if (lower.includes('extra') || lower.includes('special') || lower.includes('adjust') || lower.includes('duty') || lower.includes('medical') || (lower.includes('od') && !lower.includes('period'))) {
+                const val = Number(comp[k]);
+                if (!isNaN(val) && val > 0) {
+                    special = val;
+                    break;
+                }
+            }
+        }
+      }
+
+      // Add special to present
+      const effectivePresent = present + special;
 
       let perc = Number(
         comp.presentPercentage ??
@@ -189,8 +236,10 @@ export async function POST(req: Request) {
           ? comp.presentPercentageWith.replace("%", "")
           : 0)
       );
-      if (!perc && total > 0) {
-        perc = (present / total) * 100;
+      
+      // Always recalculate if we have data, to account for special attendance
+      if (total > 0) {
+        perc = (effectivePresent / total) * 100;
       }
 
       const courseId = courseItem.courseId as number | undefined;
@@ -208,7 +257,7 @@ export async function POST(req: Request) {
         courseName: courseItem.courseName ?? "",
         componentName: comp.componentName ?? "THEORY",
         totalClasses: total,
-        presentClasses: present,
+        presentClasses: effectivePresent,
         percentage: perc || 0,
         courseComponentId,
         courseVariant: comp.courseVariant,

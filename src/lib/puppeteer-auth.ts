@@ -395,3 +395,34 @@ export async function checkSession(sessionId: string): Promise<LoginResult | nul
         return null; // Not logged in yet
     }
 }
+
+/**
+ * STEP 4: Interact with Active Session (Remote Click)
+ * - User clicks on screenshot -> We click on Puppeteer page
+ */
+export async function handleInteraction(sessionId: string, action: 'click', x: number, y: number): Promise<{ screenshot: string }> {
+    if (!globalThis.puppeteerSession || globalThis.puppeteerSession.id !== sessionId) {
+        throw new Error("Session invalid or expired");
+    }
+    const { page } = globalThis.puppeteerSession;
+
+    console.log(`>> [Interaction] Click at (${x}, ${y})`);
+    
+    // 1. Perform Click
+    // We assume x, y are scaled to the viewport (1280x800)
+    try {
+        await page.mouse.click(x, y);
+    } catch (e) {
+        console.error("Click failed", e);
+    }
+
+    // 2. Wait for UI update (increased for dynamic captcha image reloading)
+    await new Promise(r => setTimeout(r, 800));
+
+    // 3. Take new screenshot
+    const screenshotBuffer = await page.screenshot({ encoding: "base64" });
+
+    return {
+        screenshot: `data:image/png;base64,${screenshotBuffer}`
+    };
+}

@@ -99,8 +99,36 @@ export async function POST(req: NextRequest) {
          const comp = (c.attendanceCourseComponentNameInfoList || [])[0] || {};
          const total = Number(comp.numberOfPeriods || 0);
          const present = Number(comp.numberOfPresent || 0);
+         
+         // Robustly find special attendance key
+         const extra = Number(comp.numberOfExtraAttendance || 0);
+         let special = extra;
+
+         if (special === 0) {
+            // Fuzzy search keys
+            const keys = Object.keys(comp);
+            for (const k of keys) {
+                const lower = k.toLowerCase();
+                // Skip known standard fields, percentages, and total periods
+                if (lower.includes('percent') || lower.includes('total') || lower === 'numberofpresent' || lower === 'numberofperiods' || lower.includes('absent')) continue;
+                
+                // Look for related keywords
+                if (lower.includes('extra') || lower.includes('special') || lower.includes('adjust') || lower.includes('duty') || lower.includes('medical') || (lower.includes('od') && !lower.includes('period'))) {
+                    const val = Number(comp[k]);
+                    if (!isNaN(val) && val > 0) {
+                        special = val;
+                        break;
+                    }
+                }
+            }
+         }
+
+         const effectivePresent = present + special;
+         
          let perc = Number(comp.presentPercentage || (typeof comp.presentPercentageWith === 'string' ? comp.presentPercentageWith.replace('%', '') : 0));
-         if (!perc && total > 0) perc = (present/total)*100;
+         if (total > 0) {
+            perc = (effectivePresent / total) * 100;
+         }
 
          const { studentId, sessionId } = findStudentInfo(c.courseId, comp.courseComponentId);
 
@@ -109,7 +137,8 @@ export async function POST(req: NextRequest) {
              courseName: c.courseName,
              componentName: comp.componentName || "THEORY",
              totalClasses: total,
-             presentClasses: present,
+             presentClasses: effectivePresent,
+             specialAttendance: special,
              percentage: perc || 0,
              courseComponentId: comp.courseComponentId,
              courseId: c.courseId,

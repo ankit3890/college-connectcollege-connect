@@ -15,6 +15,7 @@ interface AttendanceCourse {
   totalClasses: number;
   presentClasses: number;
   percentage: number;
+  specialAttendance?: number; // Added field
   courseComponentId?: number;
   courseVariant?: string;
   courseId?: number;
@@ -98,8 +99,40 @@ export default function AttendancePage() {
   const [timetableLoading, setTimetableLoading] = useState(false);
   const [timetableError, setTimetableError] = useState<string | null>(null);
 
+  // --- NEW: Manual Login State ---
+  const [isManualLogin, setIsManualLogin] = useState(false);
+  const [manualToken, setManualToken] = useState("");
+  const [manualUid, setManualUid] = useState("");
+  
   // --- NEW: Graph view state ---
   const [showGraph, setShowGraph] = useState(false);
+
+  // --- NEW: Role restriction ---
+  const [userRole, setUserRole] = useState<string>("");
+  const [roleLoading, setRoleLoading] = useState(true);
+
+  // Fetch user role on mount
+  useEffect(() => {
+      fetch('/api/user/me')
+        .then(res => res.json())
+        .then(data => {
+            if(data.user && data.user.role) {
+                setUserRole(data.user.role);
+                // If not admin/superadmin, force manual login
+                if(data.user.role !== 'admin' && data.user.role !== 'superadmin') {
+                    setIsManualLogin(true); 
+                }
+            } else {
+                 // Fallback if no user found (maybe force manual?)
+                 setIsManualLogin(true);
+            }
+        })
+        .catch(err => {
+            console.error("Failed to fetch role", err);
+            setIsManualLogin(true); // Default to manual on error
+        })
+        .finally(() => setRoleLoading(false));
+  }, []);
 
   // auto‑hide "success" message after a few seconds
   useEffect(() => {
@@ -112,7 +145,16 @@ export default function AttendancePage() {
   useEffect(() => {
     const storedId = localStorage.getItem("cyberId");
     const storedPass = localStorage.getItem("cyberPass");
-    if (storedId && storedPass) {
+    const storedToken = localStorage.getItem("manual_token");
+    const storedUid = localStorage.getItem("manual_uid");
+
+    if (storedToken && storedUid) {
+        setIsManualLogin(true);
+        setManualToken(storedToken);
+        setManualUid(storedUid);
+        setRememberMe(true);
+        setAcceptedTerms(true);
+    } else if (storedId && storedPass) {
       setCyberId(storedId);
       setCyberPass(storedPass);
       setRememberMe(true);
@@ -146,74 +188,116 @@ export default function AttendancePage() {
     }
   }
 
+  // --- NEW: Interactive Click Handler ---
+  const [imageLoading, setImageLoading] = useState(false);
+
+  async function handleImageClick(e: React.MouseEvent<HTMLImageElement>) {
+      if (imageLoading || !sessionId) return;
+      
+      // Calculate relative coordinates
+      const img = e.currentTarget;
+      const rect = img.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
+      // Scale coordinates to the actual image resolution (1280x800 viewport standard)
+      // Displayed Image: rect.width x rect.height
+      // Viewport: 1280 x 800
+      // We send the RAW click for the viewport.
+      // Scaling factor:
+      const scaleX = 1280 / rect.width;
+      const scaleY = 800 / rect.height;
+      
+      const actualX = Math.round(x * scaleX);
+      const actualY = Math.round(y * scaleY);
+      
+      console.log(`Click at client(${x},${y}) -> scaled(${actualX},${actualY})`);
+      
+      setImageLoading(true);
+      setMsg("Interacting...");
+
+      try {
+          const res = await fetch("/api/attendance/auth/interact", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ sessionId, action: 'click', x: actualX, y: actualY })
+          });
+          
+          if (res.ok) {
+              const data = await res.json();
+              if (data.screenshot) {
+                  setCaptchaImg(data.screenshot);
+                  setMsg("Updated! You can click again or type credentials.");
+              }
+          }
+      } catch (e) {
+          console.error(e);
+      } finally {
+          setImageLoading(false);
+      }
+  }
+
   async function handleLoginSubmit(e: FormEvent) {
     e.preventDefault();
-    setError(null);
     setMsg(null);
-
-    // If Manual Mode (No Captcha needed), we skip credential checks
-    if (captchaNeeded) {
-        if (!sessionId || !cyberId || !cyberPass) {
-             setError("Please fill all fields.");
-             return;
-        }
-        if (!captchaInput) {
-            setError("Please enter the captcha.");
-            return;
-        }
-    } else {
-        // Manual Mode: Just Sync
-        // We don't need credentials
-    }
-
+    setError(null);
     setLoading(true);
+
     try {
-      // If Manual Mode, redirect logic to Check Login
-      if (!captchaNeeded) {
-          await handleCheckLogin(false);
-          setLoading(false);
-          return;
+      // 0) Initialize session if needed (only for standard login)
+      let currentSessionId = sessionId;
+      if (!isManualLogin && !sessionId && captchaNeeded) {
+          // ... (existing session init logic if needed, but usually handleInitSession does this)
+          // For now, assume session initialized or not needed yet
       }
 
-      const res = await fetch("/api/attendance/auth/login", {
+      // 1) Post credentials
+      const res = await fetch("/api/attendance/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-            sessionId,
-            user: cyberId, 
-            pass: cyberPass, 
-            captcha: captchaInput 
+        body: JSON.stringify({
+          cyberId: isManualLogin ? "" : cyberId,
+          cyberPass: isManualLogin ? "" : cyberPass,
+          sessionId: currentSessionId, 
+          captcha: captchaInput, // Might be empty if not needed
+          // Manual credentials
+          authToken: isManualLogin ? manualToken : undefined,
+          authUid: isManualLogin ? manualUid : undefined,
         }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Login failed");
-        // Don't reset session immediately, allow retry if just a typo?
-        // Actually, if captcha was wrong, we probably need a NEW session/captcha.
-        // For now, let's reset everything on failure to be safe.
-        setCaptchaImg(null); 
-        setSessionId("");
-        return;
+        // If 401/403, might need captcha (if standard login)
+        throw new Error(data.msg || data.error || "Login failed");
       }
 
-      setMsg("Login Successful! Loading attendance...");
+      // Success
+      await fetchInitialData(data.token, data.uid, data.authPref, data);
+
+      setMsg("Login successful!");
       
-      // Save tokens
-      // NOTE: The backend now returns token, uid, authPref directly
-      if (data.token) {
-          // Manually handle tokens & fetch
-          await fetchInitialData(data.token, data.uid, data.authPref);
-          return; // Stop here, fetchInitialData will set state
+      // Save credentials if Remember Me is checked
+      if (rememberMe) {
+          if (isManualLogin) {
+              localStorage.setItem("manual_token", manualToken);
+              localStorage.setItem("manual_uid", manualUid);
+          } else {
+              localStorage.setItem("cyber_id", cyberId);
+              localStorage.setItem("cyber_pass", cyberPass);
+          }
+      } else {
+         // Clear if not remembered
+         localStorage.removeItem("cyber_id");
+         localStorage.removeItem("cyber_pass");
+         localStorage.removeItem("manual_token");
+         localStorage.removeItem("manual_uid");
       }
 
     } catch (err: any) {
       console.error(err);
-      setError("Something went wrong. Please try again.");
-      // We do NOT reset session ID here because user might try again (manual check)
-      // setCaptchaImg(null); 
-      // setSessionId("");
+      setError(err.message || "An error occurred");
     } finally {
       setLoading(false);
     }
@@ -664,8 +748,46 @@ export default function AttendancePage() {
 
               {/* Form */}
               <div className="p-6 sm:p-8 space-y-6">
+
+                {/* Mobile Warning - Top */}
+                 <div className="mb-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/50 rounded-lg text-red-600 dark:text-red-400 text-xs font-semibold flex items-center justify-center gap-2">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    Note: Manual Login does not work on mobile. Use PC/Laptop.
+                 </div>
                 
-                {/* STEP 1: INITIALIZE or LOADING SCREENSHOT */}
+                {/* MODE TOGGLE - Moved to Top */}
+                {!roleLoading && ['admin', 'superadmin'].includes(userRole) ? (
+                    <div className="flex p-1 bg-slate-100 dark:bg-slate-700/50 rounded-lg mb-6">
+                       <button
+                          type="button"
+                          onClick={() => setIsManualLogin(false)}
+                          className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${!isManualLogin ? 'bg-white dark:bg-slate-800 text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                       >
+                          CyberVidya Login
+                       </button>
+                       <button
+                          type="button"
+                          onClick={() => setIsManualLogin(true)}
+                          className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${isManualLogin ? 'bg-white dark:bg-slate-800 text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                       >
+                          Manual Token
+                       </button>
+                    </div>
+                ) : (
+                   <div className="mb-6 flex items-center gap-2 text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 p-2 rounded-lg border border-indigo-100 dark:border-indigo-800/50">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M12 15V17M6 21H18C19.1046 21 20 20.1046 20 19V10C20 8.89543 19.1046 8 18 8H6C4.89543 8 4 8.89543 4 10V19C4 20.1046 4.89543 21 6 21ZM16 8V5C16 2.79086 14.2091 1 12 1C9.79086 1 8 2.79086 8 5V8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      Manual Token Mode
+                   </div>
+                )}
+                
+                {/* AUTOMATED LOGIN UI */}
+                {!isManualLogin && (
+                    <>
+                    {/* STEP 1: INITIALIZE or LOADING SCREENSHOT */}
                 {!captchaImg && (
                   <div className="space-y-4">
                      <div className="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-5 border border-slate-100 dark:border-slate-600">
@@ -711,10 +833,301 @@ export default function AttendancePage() {
                 {/* STEP 2: FILL CREDENTIALS & CAPTCHA */}
                 {captchaImg && (
                   <form onSubmit={handleLoginSubmit} className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-300">
-                     <div className="bg-slate-100 dark:bg-slate-900 rounded-lg p-2 border border-slate-200 dark:border-slate-700 flex justify-center overflow-hidden">
-                        <img src={captchaImg} alt="CyberVidya Captcha" className="max-w-full h-auto rounded shadow-sm opacity-90 hover:opacity-100 transition-opacity" />
+                     <div className="relative bg-slate-100 dark:bg-slate-900 rounded-lg p-3 border border-slate-200 dark:border-slate-700 flex justify-center overflow-hidden min-h-96">
+                        <img 
+                            src={captchaImg} 
+                            alt="CyberVidya Captcha" 
+                            onClick={handleImageClick}
+                            className={`w-full h-auto rounded shadow-sm transition-opacity cursor-crosshair ${imageLoading ? "opacity-50 pointer-events-none" : "hover:opacity-100 opacity-90"}`} 
+                        />
+                        {imageLoading && (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                                <span className="bg-black/75 text-white px-3 py-1 rounded text-xs font-bold animate-pulse">
+                                    Clicking...
+                                </span>
+                            </div>
+                        )}
                      </div>
-                     <p className="text-xs text-center text-slate-500">Please enter the text shown in the image above.</p>
+                     <p className="text-xs text-center text-slate-500">
+                        {imageLoading ? "Sending click to remote browser..." : "Click on the image to solve visual captchas interactively."}
+                     </p>
+
+                    {captchaNeeded && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1.5 col-span-2 sm:col-span-1">
+                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
+                          User ID
+                        </label>
+                        <input
+                          className="w-full rounded-lg border border-slate-200 dark:border-slate-600 px-3 py-2 text-sm bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:border-slate-900 dark:focus:border-white focus:ring-2 focus:ring-slate-900/10 dark:focus:ring-white/10 outline-none transition-all"
+                          value={cyberId}
+                          onChange={(e) => setCyberId(e.target.value)}
+                          placeholder="ID"
+                          required
+                        />
+                      </div>
+                      <div className="space-y-1.5 col-span-2 sm:col-span-1">
+                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
+                          Password
+                        </label>
+                        <input
+                          className="w-full rounded-lg border border-slate-200 dark:border-slate-600 px-3 py-2 text-sm bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:border-slate-900 dark:focus:border-white focus:ring-2 focus:ring-slate-900/10 dark:focus:ring-white/10 outline-none transition-all"
+                          type="password"
+                          value={cyberPass}
+                          onChange={(e) => setCyberPass(e.target.value)}
+                          placeholder="pass"
+                          required
+                        />
+                      </div>
+                    </div>
+                    )}
+
+                    {captchaNeeded && (
+                      <div className="space-y-1.5 animate-in fade-in slide-in-from-bottom-2">
+                        <label className="block text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wide">
+                          Captcha Answer
+                        </label>
+                        <input
+                          className="w-full rounded-lg border-2 border-indigo-100 dark:border-indigo-900/50 px-4 py-3 text-lg font-mono tracking-widest bg-indigo-50/50 dark:bg-indigo-900/20 text-slate-900 dark:text-white focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all placeholder:text-slate-400"
+                          value={captchaInput}
+                          onChange={(e) => setCaptchaInput(e.target.value)}
+                          placeholder="ENTER CAPTCHA"
+                          autoFocus
+                          required
+                        />
+                      </div>
+                    )}
+
+                    {!captchaNeeded && (
+                         <div className="p-4 bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-800 rounded-xl text-center space-y-3 animate-pulse">
+                            <div className="flex justify-center">
+                                <span className="relative flex h-3 w-3">
+                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                                  <span className="relative inline-flex rounded-full h-3 w-3 bg-indigo-500"></span>
+                                </span>
+                            </div>
+                            <div>
+                                <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                                    Waiting for login...
+                                </p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400">
+                                    Please login in the popup window.<br/>
+                                    We will sync automatically.
+                                </p>
+                            </div>
+                         </div>
+                    )}
+
+                    <button
+                      type="submit"
+                      disabled={loading || !captchaNeeded} // Disable main button in auto-mode
+                      className={`w-full rounded-lg px-4 py-3.5 text-sm font-bold text-white shadow-lg transition-all flex items-center justify-center gap-2
+                        ${!captchaNeeded ? 'bg-slate-400 cursor-default opacity-50' : 'bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] shadow-indigo-600/20'}`}
+                    >
+                      {loading ? (
+                         <>
+                          <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          <span>Verifying...</span>
+                        </>
+                      ) : (
+                        captchaNeeded ? "Verify & Login" : "Auto-Syncing..."
+                      )}
+                    </button>
+                    
+                    {/* Only show secondary sync link if we are in captcha mode (as backup) */}
+                    <div className="text-center pt-2">
+                        <button 
+                            type="button" 
+                            onClick={() => handleCheckLogin(false)}
+                            className="text-indigo-500 hover:text-indigo-600 text-xs font-medium hover:underline"
+                        >
+                            {checkingLogin ? "Checking status..." : "Click here if not syncing automatically"}
+                        </button>
+                    </div>
+                    
+                     <button
+                      type="button"
+                      onClick={() => { setCaptchaImg(null); setSessionId(""); setMsg(null); setError(null); }}
+                      className="w-full text-xs text-slate-400 hover:text-slate-600 underline"
+                    >
+                      Cancel / Retry Screenshot
+                    </button>
+                  </form>
+                    )}
+                    </>
+                )}
+
+                {error && (
+                  <div className="flex items-start gap-3 p-3 rounded-lg bg-red-50 dark:bg-red-900/30 border border-red-100 dark:border-red-800 text-red-600 dark:text-red-300 text-sm animate-in fade-in slide-in-from-top-2">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0 mt-0.5">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
+                      <path d="M12 8v4m0 4h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                    </svg>
+                    <p>{error}</p>
+                  </div>
+                )}
+                
+                 {msg && !error && (
+                  <div className="flex items-start gap-3 p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-100 dark:border-emerald-800 text-emerald-600 dark:text-emerald-300 text-sm">
+                    <p>{msg}</p>
+                  </div>
+                )}
+                <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm">
+                  {isManualLogin ? "Paste your Authorization token and UID manually." : "Login securely via CyberVidya portal."}
+                </p>
+              </div>
+
+
+
+              {/* MANUAL LOGIN FORM */}
+              {isManualLogin && (
+                  <form onSubmit={handleLoginSubmit} className="space-y-4 animate-in fade-in slide-in-from-top-2">
+                       <div className="space-y-1.5">
+                         <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
+                            Authorization Token
+                         </label>
+                         <input
+                            className="w-full rounded-lg border border-slate-200 dark:border-slate-600 px-3 py-2 text-sm bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all placeholder:text-slate-400"
+                            value={manualToken}
+                            onChange={(e) => setManualToken(e.target.value)}
+                            placeholder="Basic ... or GlobalEducation ..."
+                            required
+                         />
+                         <p className="text-[10px] text-slate-400">Paste the full value (e.g. "GlobalEducation 612...")</p>
+                       </div>
+                       
+                       <div className="space-y-1.5">
+                         <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
+                            UID
+                         </label>
+                         <input
+                            className="w-full rounded-lg border border-slate-200 dark:border-slate-600 px-3 py-2 text-sm bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all placeholder:text-slate-400 font-mono"
+                            value={manualUid}
+                            onChange={(e) => setManualUid(e.target.value)}
+                            type="number"
+                            placeholder="e.g. 19500"
+                            required
+                         />
+                       </div>
+                       
+                       {/* HOW TO GUIDE */}
+                       {/* HOW TO GUIDE */}
+                       <details className="text-xs text-slate-500 bg-slate-50 dark:bg-slate-800/50 p-3 rounded border border-slate-100 dark:border-slate-700 group cursor-pointer">
+                           <summary className="font-medium hover:text-indigo-600 select-none flex items-center justify-between">
+                             <span>How to get these details? (Visual Guide)</span>
+                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="transform group-open:rotate-180 transition-transform text-slate-400">
+                                <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                             </svg>
+                           </summary>
+                           <div className="mt-4 space-y-5 text-slate-600 dark:text-slate-400 border-t border-slate-200 dark:border-slate-700 pt-3">
+                               
+
+
+                               <div className="space-y-2">
+                                  <p>1. Step one: Open the CyberVidya website</p>
+                                  <img src="/images/guide-step2.png" alt="Open Website" className="rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm w-full" />
+                               </div>
+
+                               <div className="space-y-2">
+                                  <p>2. Press F12 to open DevTools</p>
+                                  <img src="/images/guide-step3.png" alt="Open DevTools" className="rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm w-full" />
+                               </div>
+
+                               <div className="space-y-2">
+                                  <p>3. Select <strong>Network</strong> at the top and then <strong>Fetch/XHR</strong></p>
+                                  <img src="/images/guide-step1.png" alt="Select Network Tab" className="rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm w-full" />
+                               </div>
+
+                               <div className="space-y-1">
+                                  <p>4. Login with your ID and Password</p>
+                               </div>
+
+                               <div className="space-y-2">
+                                  <p>5. Under DevTools sidebar, select <strong>user-details</strong></p>
+                                </div>
+
+                               <div className="space-y-2">
+                                  <p>6. Scroll down and copy the long <strong>Authorization</strong> token (e.g. GlobalEducation...) and <strong>UID</strong> (e.g. 5134)</p>
+                               </div>
+
+                           </div>
+                       </details>
+
+                       <button
+                          type="submit"
+                          disabled={loading}
+                          className="w-full rounded-lg bg-indigo-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-600/20 hover:bg-indigo-700 active:scale-[0.98] transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        >
+                          {loading ? "Verifying..." : "Login with Token"}
+                        </button>
+                        
+                         {error && (
+                          <div className="flex items-start gap-3 p-3 rounded-lg bg-red-50 dark:bg-red-900/30 border border-red-100 dark:border-red-800 text-red-600 dark:text-red-300 text-sm animate-in fade-in slide-in-from-top-2">
+                             <p>{error}</p>
+                          </div>
+                        )}
+                  </form>
+              )}
+
+              {/* STANDARD LOGIN STEPS */}
+              {!isManualLogin && (
+                <>
+                {/* STEP 1: INITIALIZE SESSION */}
+                {!captchaImg && !loading && (
+                  <div className="space-y-4 animate-in fade-in zoom-in-95 duration-300">
+                    <div className="p-4 bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200 text-sm rounded-lg flex gap-3">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                      <p>
+                        We use a secure proxy to connect to CyberVidya. Your credentials are processed locally and never stored permanently.
+                      </p>
+                    </div>
+
+                    <button
+                      onClick={handleInitSession}
+                      disabled={loading}
+                      className="w-full rounded-lg bg-slate-900 dark:bg-white px-4 py-3.5 text-sm font-bold text-white dark:text-black shadow-lg shadow-slate-900/20 dark:shadow-white/20 hover:bg-slate-800 dark:hover:bg-slate-200 hover:shadow-xl hover:shadow-slate-900/30 dark:hover:shadow-white/30 active:scale-[0.98] transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      {loading ? (
+                        <>
+                          <svg className="animate-spin h-4 w-4 text-white dark:text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          <span>Loading Page...</span>
+                        </>
+                      ) : (
+                        "Connect to CyberVidya"
+                      )}
+                    </button>
+                  </div>
+                )}
+
+                {/* STEP 2: FILL CREDENTIALS & CAPTCHA */}
+                {captchaImg && (
+                  <form onSubmit={handleLoginSubmit} className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                     <div className="relative bg-slate-100 dark:bg-slate-900 rounded-lg p-3 border border-slate-200 dark:border-slate-700 flex justify-center overflow-hidden min-h-96">
+                        <img 
+                            src={captchaImg} 
+                            alt="CyberVidya Captcha" 
+                            onClick={handleImageClick}
+                            className={`w-full h-auto rounded shadow-sm transition-opacity cursor-crosshair ${imageLoading ? "opacity-50 pointer-events-none" : "hover:opacity-100 opacity-90"}`} 
+                        />
+                        {imageLoading && (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                                <span className="bg-black/75 text-white px-3 py-1 rounded text-xs font-bold animate-pulse">
+                                    Clicking...
+                                </span>
+                            </div>
+                        )}
+                     </div>
+                     <p className="text-xs text-center text-slate-500">
+                        {imageLoading ? "Sending click to remote browser..." : "Click on the image to solve visual captchas interactively."}
+                     </p>
 
                     {captchaNeeded && (
                     <div className="grid grid-cols-2 gap-4">
@@ -822,21 +1235,6 @@ export default function AttendancePage() {
                   </form>
                 )}
 
-                {error && (
-                  <div className="flex items-start gap-3 p-3 rounded-lg bg-red-50 dark:bg-red-900/30 border border-red-100 dark:border-red-800 text-red-600 dark:text-red-300 text-sm animate-in fade-in slide-in-from-top-2">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0 mt-0.5">
-                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
-                      <path d="M12 8v4m0 4h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                    </svg>
-                    <p>{error}</p>
-                  </div>
-                )}
-                
-                 {msg && !error && (
-                  <div className="flex items-start gap-3 p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-100 dark:border-emerald-800 text-emerald-600 dark:text-emerald-300 text-sm">
-                    <p>{msg}</p>
-                  </div>
-                )}
 
                 <div className="pt-4 border-t border-slate-100 dark:border-slate-700 text-center">
                   <p className="text-xs text-slate-400 flex items-center justify-center gap-1.5">
@@ -846,7 +1244,8 @@ export default function AttendancePage() {
                     Your credentials form a one-time session.
                   </p>
                 </div>
-              </div>
+                </>
+              )}
             </section>
           </div>
         )}
